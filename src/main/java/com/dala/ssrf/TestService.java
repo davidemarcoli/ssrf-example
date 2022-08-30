@@ -1,6 +1,5 @@
 package com.dala.ssrf;
 
-import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -8,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,8 +41,7 @@ public class TestService {
 
             StringBuilder output = new StringBuilder();
 
-            BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(process.getInputStream()));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
             String line;
             while ((line = reader.readLine()) != null) {
@@ -51,7 +50,6 @@ public class TestService {
 
             int exitVal = process.waitFor();
             if (exitVal == 0) {
-                System.out.println("Success!");
                 System.out.println(output);
                 return output.toString();
             } else {
@@ -60,9 +58,16 @@ public class TestService {
             }
 
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            return findCauseUsingPlainJava(e).getMessage();
         }
+    }
 
-        return "";
+    public static Throwable findCauseUsingPlainJava(Throwable throwable) {
+        Objects.requireNonNull(throwable);
+        Throwable rootCause = throwable;
+        while (rootCause.getCause() != null && rootCause.getCause() != rootCause) {
+            rootCause = rootCause.getCause();
+        }
+        return rootCause;
     }
 }
